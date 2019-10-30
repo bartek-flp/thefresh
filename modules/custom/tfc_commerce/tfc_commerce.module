@@ -1,0 +1,118 @@
+<?php
+
+use Drupal\media\Entity\Media;
+
+function tfc_commerce_preprocess_commerce_product(&$variables) {
+  /** @var \Drupal\commerce_product\Entity\Product $product */
+  $product = $variables['elements']['#commerce_product'];
+
+  /** @var \Drupal\Core\Field\Plugin\Field\FieldType\EntityReferenceItem $media */
+  $media = $product->get('field_product_media')->first();
+
+  /** @var \Drupal\Core\Entity\Plugin\DataType\EntityReference $entityReference */
+  $entityReference = $media->get('entity');
+
+  /** @var \Drupal\Core\Entity\Plugin\DataType\EntityAdapter $entityAdapter */
+  $entityAdapter = $entityReference->getTarget();
+
+  /** @var \Drupal\paragraphs\Entity\Paragraph $referencedEntity */
+  $referencedEntity = $entityAdapter->getValue();
+
+  $values = $referencedEntity->get('field_media')->getValue();
+
+  $images_main = $images_nav = [];
+  foreach ($values as $key => $item) {
+    $media = Media::load($item['target_id']);
+    $fid = $media->field_media_image->target_id;
+    $file = \Drupal\file\Entity\File::load($fid);
+    $images_main[] = [
+      'render' => [
+        '#theme' => 'image_style',
+        '#style_name' => 'slidermain_300x450',
+        '#uri' => $file->getFileUri(),
+      ],
+      'data' => [
+        'url' => file_create_url($file->getFileUri())
+      ],
+    ];
+    $images_nav[] = [
+      'render' => [
+        '#theme' => 'image_style',
+        '#style_name' => 'small85x100',
+        '#uri' => $file->getFileUri(),
+      ],
+      'data' => [
+        'url' => file_create_url($file->getFileUri())
+      ],
+    ];
+  }
+
+  // Attributes.
+  $attrColor = $variables["elements"]["variation_attributes"]["variation_attribute_kolor"][0]["#commerce_product_attribute_value"];
+  $color = $attrColor->get('name')->value;
+
+  $variables['color'] = $color;
+  $variables['slider_nav'] = $images_nav;
+  $variables['slider_main_image'] = $images_main;
+}
+
+function tfc_commerce_theme_suggestions_alter(array &$suggestions, array $variables, $hook) {
+  if ($hook == 'radios') {
+    foreach ($variables["element"]["#parents"] as $element) {
+      $suggestions[] = $hook . '__' . $element;
+    }
+  }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter() for form 'commerce_checkout_flow_multistep_default'.
+ */
+function tfc_commerce_form_commerce_checkout_flow_multistep_default_alter(&$form, $form_state) {
+  switch($form['#step_id']) {
+    case 'order_information':
+      $form['#attached']['library'][] = 'tfc_commerce/tfc_commerce';
+      $form["shipping_information"]["#weight"] = -10;
+      $form["payment_information"]["#weight"] = -8;
+      unset($form["shipping_information"]["#prefix"]);
+      unset($form["shipping_information"]["#suffix"]);
+      $form['the_same'] = [
+        '#type' => 'checkbox',
+        '#title' => t('Payment info is the same as shipping'),
+        '#default_value' => 0,
+        '#return_value' => "checked",
+        '#attributes' => ['class'=>['copy-it']],
+        '#weight' => -9,
+      ];
+
+      $form["shipping_information"]["recalculate_shipping"]["#access"] = false;
+      break;
+  }
+}
+
+/**
+ * Implements hook_preprocess_HOOK().
+ *
+ * @param array $variables
+ *  Template variables.
+ */
+function tfc_commerce_preprocess_paragraph(&$variables) {
+  $paragraph = $variables['paragraph'];
+  $bundle = $paragraph->bundle();
+
+  switch ($bundle) {
+    case 'slider':
+      $variables['#attached']['library'][] = 'thefresh/slick';
+      $variables['#attached']['library'][] = 'tfc_commerce/tfc_commerce';
+      break;
+  }
+}
+
+/**
+ * Implements hook_preprocess_HOOK().
+ */
+function tfc_commerce_preprocess_page(&$variables) {
+  $block = \Drupal\block\Entity\Block::load('cart');
+  $variables['cart'] = \Drupal::entityTypeManager()
+    ->getViewBuilder('block')
+    ->view($block);
+}

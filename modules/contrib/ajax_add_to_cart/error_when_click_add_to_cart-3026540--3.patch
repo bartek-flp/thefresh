@@ -1,0 +1,286 @@
+diff --git a/ajax_add_to_cart.module b/ajax_add_to_cart.module
+index d120b67..ba632bf 100644
+--- a/ajax_add_to_cart.module
++++ b/ajax_add_to_cart.module
+@@ -53,7 +53,7 @@ function ajax_add_to_cart_ajax_validate(&$form, $form_state) {
+     // Using getInstanace method to create Object.
+     $object = AjaxCartHelper::getInstance();
+     // If validated successfully submit form.
+-    $object->ajaxAddToCartAjaxResponse($form_id, $response);
++    $object->ajaxAddToCartAjaxResponse($form, $form_id, $response);
+   }
+   return $response;
+ }
+diff --git a/config/install/ajax_add_to_cart.ajaxconfig.yml b/config/install/ajax_add_to_cart.ajaxconfig.yml
+index 41b812c..f7c516d 100644
+--- a/config/install/ajax_add_to_cart.ajaxconfig.yml
++++ b/config/install/ajax_add_to_cart.ajaxconfig.yml
+@@ -1,3 +1,5 @@
+ ajax_modal_width: 250
+ ajax_modal_height: 300
+ time_ajax_modal: 2000
++show_ajax_message: 0
++ajax_message: container
+diff --git a/js/commands.js b/js/commands.js
+index 5892678..60fdb1a 100644
+--- a/js/commands.js
++++ b/js/commands.js
+@@ -3,10 +3,6 @@
+   Drupal.AjaxCommands.prototype.reload = function (ajax, response, status) {
+     setTimeout(
+     function() {
+-      $("#drupal-modal .cart-block--link__expand").click();
+-    }, 0);
+-    setTimeout(
+-    function() {
+       $(".ui-dialog .ui-button").click();
+     }, drupalSettings.ajax_add_to_cart.ajax_add_to_cart.time);
+   };
+diff --git a/src/Form/AjaxConfigForm.php b/src/Form/AjaxConfigForm.php
+index 81776ce..c54c13f 100644
+--- a/src/Form/AjaxConfigForm.php
++++ b/src/Form/AjaxConfigForm.php
+@@ -22,6 +22,7 @@ class AjaxConfigForm extends ConfigFormBase {
+    * @var \Drupal\Core\Config\ConfigFactory
+    */
+   protected $configFactory;
++
+   /**
+    * Drupal\Core\Path\PathValidator definition.
+    *
+@@ -33,9 +34,8 @@ class AjaxConfigForm extends ConfigFormBase {
+    * Constructs a new AjaxConfigForm object.
+    */
+   public function __construct(
+-    ConfigFactory $config_factory,
+-    PathValidator $path_validator
+-    ) {
++  ConfigFactory $config_factory, PathValidator $path_validator
++  ) {
+     parent::__construct($config_factory);
+     $this->configFactory = $config_factory;
+     $this->pathValidator = $path_validator;
+@@ -46,8 +46,7 @@ class AjaxConfigForm extends ConfigFormBase {
+    */
+   public static function create(ContainerInterface $container) {
+     return new static(
+-      $container->get('config.factory'),
+-      $container->get('path.validator')
++      $container->get('config.factory'), $container->get('path.validator')
+     );
+   }
+ 
+@@ -77,6 +76,11 @@ class AjaxConfigForm extends ConfigFormBase {
+       '#title' => $this->t('Modal window settings'),
+       '#description' => $this->t('Modal window settings'),
+     ];
++    $form['ajax_modal_settings']['is_modal'] = [
++      '#type' => 'checkbox',
++      '#title' => $this->t('Select to avoid modal popup.'),
++      '#default_value' => $config->get('is_modal'),
++    ];
+     $form['ajax_modal_settings']['time_ajax_modal'] = [
+       '#type' => 'textfield',
+       '#title' => $this->t('Enter time after which modal window closes.'),
+@@ -84,18 +88,45 @@ class AjaxConfigForm extends ConfigFormBase {
+       '#description' => $this->t('Enter time in miliseconds like: 2000 stands for 2 seconds'),
+     ];
+     $form['ajax_modal_settings']['ajax_modal_width'] = [
+-      '#type'          => 'textfield',
+-      '#title'         => $this->t('Please choose width of modal window.'),
++      '#type' => 'textfield',
++      '#title' => $this->t('Please choose width of modal window.'),
+       '#default_value' => $config->get('ajax_modal_width'),
+-      '#size'          => self::AJAX_MODAL_INPUT_SIZE,
+-      '#field_suffix'  => ' px',
++      '#size' => self::AJAX_MODAL_INPUT_SIZE,
++      '#field_suffix' => ' px',
+     ];
+     $form['ajax_modal_settings']['ajax_modal_height'] = [
+-      '#type'          => 'textfield',
+-      '#title'         => $this->t('Please choose height of modal window.'),
++      '#type' => 'textfield',
++      '#title' => $this->t('Please choose height of modal window.'),
+       '#default_value' => $config->get('ajax_modal_height'),
+-      '#size'          => self::AJAX_MODAL_INPUT_SIZE,
+-      '#field_suffix'  => ' px',
++      '#size' => self::AJAX_MODAL_INPUT_SIZE,
++      '#field_suffix' => ' px',
++    ];
++    $form['ajax_message_settings'] = [
++      '#type' => 'fieldset',
++      '#title' => $this->t('Message settings'),
++      '#description' => $this->t('Message settings'),
++    ];
++    $form['ajax_message_settings']['show_ajax_message'] = [
++      '#type' => 'checkbox',
++      '#title' => t('Show Drupal\'s default message.'),
++      '#states' => [
++        'unchecked' => [
++          ':input[name="name"]' => ['filled' => TRUE],
++        ],
++      ],
++      '#default_value' => $config->get('show_ajax_message')
++    ];
++    $form['ajax_message_settings']['ajax_message'] = [
++      '#type' => 'textfield',
++      '#title' => $this->t('Selector Box'),
++      '#description' => $this->t('Please enter id with # or class with . prefix. For ex: .region-content'),
++      '#default_value' => $config->get('ajax_message'),
++      '#states' => [
++        'visible' => [
++          ':input[name="hide_ajax_message"]' => ['checked' => TRUE],
++        ],
++      ],
++      '#default_value' => $config->get('ajax_message')
+     ];
+     return parent::buildForm($form, $form_state);
+   }
+@@ -103,13 +134,28 @@ class AjaxConfigForm extends ConfigFormBase {
+   /**
+    * {@inheritdoc}
+    */
++  public function validateForm(array &$form, FormStateInterface $form_state) {
++    if(!empty($form_state->getValue('show_ajax_message')) && empty($form_state->getValue('ajax_message'))) {
++      $form_state->setErrorByName('show_ajax_message', $this->t('Please enter id or class inside selector box.'));
++    }
++    if(empty($form_state->getValue('show_ajax_message')) && !empty($form_state->getValue('ajax_message'))) {
++      $form_state->setErrorByName('show_ajax_message', $this->t('Please check the show message checkbox.'));
++    }
++  }
++
++  /**
++   * {@inheritdoc}
++   */
+   public function submitForm(array &$form, FormStateInterface $form_state) {
+     parent::submitForm($form, $form_state);
+ 
+     $this->config('ajax_add_to_cart.ajaxconfig')
++      ->set('is_modal', $form_state->getValue('is_modal'))
+       ->set('time_ajax_modal', $form_state->getValue('time_ajax_modal'))
+       ->set('ajax_modal_width', $form_state->getValue('ajax_modal_width'))
+       ->set('ajax_modal_height', $form_state->getValue('ajax_modal_height'))
++      ->set('show_ajax_message', $form_state->getValue('show_ajax_message'))
++      ->set('ajax_message', $form_state->getValue('ajax_message'))
+       ->save();
+   }
+ 
+diff --git a/src/Helper/AjaxCartHelper.php b/src/Helper/AjaxCartHelper.php
+index 43529de..726bcec 100644
+--- a/src/Helper/AjaxCartHelper.php
++++ b/src/Helper/AjaxCartHelper.php
+@@ -6,6 +6,8 @@ use Drupal\Core\Ajax\OpenModalDialogCommand;
+ use Drupal\ajax_add_to_cart\Ajax\ReloadCommand;
+ use Drupal\block\Entity\Block;
+ use Drupal\Core\Ajax\ReplaceCommand;
++use Drupal\Core\Ajax\PrependCommand;
++use Drupal\Core\Ajax\AddCssCommand;
+ 
+ /**
+  * Class AjaxCartHelper.
+@@ -81,15 +83,11 @@ class AjaxCartHelper {
+     ];
+     $form['#prefix'] = '<div id="modal_ajax_form_' . $form_id . '">';
+     $form['#suffix'] = '</div>';
+-    $form['status_messages_' . $form_id] = [
+-      '#type' => 'status_messages',
+-      '#weight' => -10,
+-    ];
+     $form['form_id'] = [
+       '#type' => 'hidden',
+       '#value' => $form_id,
+     ];
+-    // // Add ajax callback to the form.
++    // Add ajax callback to the form.
+     $form['actions']['submit']['#attributes']['class'][] = 'use-ajax';
+     $form['actions']['submit']['#ajax'] = [
+       'callback' => 'ajax_add_to_cart_ajax_validate',
+@@ -119,28 +117,40 @@ class AjaxCartHelper {
+    * @return object
+    *   Return response object.
+    */
+-  public function ajaxAddToCartAjaxResponse($form_id, $response) {
+-    // Adding modal window.
+-    $options = [
+-      'width' => $this->configFactory->get('ajax_add_to_cart.ajaxconfig')->get('ajax_modal_width'),
+-      'height' => $this->configFactory->get('ajax_add_to_cart.ajaxconfig')->get('ajax_modal_height'),
+-    ];
+-    $title = t('Successfully Added');
+-    if ($_SESSION['_symfony_flashes']) {
+-      $message = $_SESSION['_symfony_flashes']['status'][0]->__toString();
+-    }
+-    if (!empty($this->cartBlock)) {
+-      $response->addCommand(new OpenModalDialogCommand($title, $message, $options));
+-    }
+-    else {
+-      $customblock = $this->container->get('plugin.manager.block')->createInstance('commerce_cart', []);
+-      $render = $customblock->build();
+-      $response->addCommand(new OpenModalDialogCommand($title, $render, $options));
++  public function ajaxAddToCartAjaxResponse(&$form, $form_id, $response) {
++    // Check if to load modal.
++    $isModal = !empty($this->configFactory->get('ajax_add_to_cart.ajaxconfig')
++      ->get('is_modal')) ? $this->configFactory
++      ->get('ajax_add_to_cart.ajaxconfig')->get('is_modal') : 0;
++    if (!$isModal) {
++      // Adding modal window.
++      $options = [
++        'width' => $this->configFactory->get('ajax_add_to_cart.ajaxconfig')->get('ajax_modal_width'),
++        'height' => $this->configFactory->get('ajax_add_to_cart.ajaxconfig')->get('ajax_modal_height'),
++      ];
++      $title = t('Successfully Added');
++      if (!empty($this->cartBlock)) {
++        $response->addCommand(new OpenModalDialogCommand($title, $this->cartBlock, $options));
++      }
++      else {
++        $customblock = $this->container->get('plugin.manager.block')->createInstance('commerce_cart', []);
++        $render = $customblock->build();
++        $response->addCommand(new OpenModalDialogCommand($title, $render, $options));
++      }
++      $response->addCommand(new ReplaceCommand('.block-commerce-cart', $this->cartBlock));
++      if ($this->configFactory->get('ajax_add_to_cart.ajaxconfig')->get('show_ajax_message')) {
++        $selector = $this->configFactory->get('ajax_add_to_cart.ajaxconfig')->get('ajax_message');
++        $status_messages = array('#type' => 'status_messages');
++        $messages = \Drupal::service('renderer')->renderRoot($status_messages);
++        if (!empty($messages) && $selector) {
++          $response->addCommand(new PrependCommand($selector, $messages));
++        }
++      }
++      $response->addCommand(new ReloadCommand());
++      $CssString = '<style>.cart-block--contents{display:block!important;}</style>';
++      $response->addCommand(new AddCssCommand($CssString));
++      return $response;
+     }
+-    $response->addCommand(new ReplaceCommand('.block-commerce-cart', $this->cartBlock));
+-    $response->addCommand(new ReloadCommand());
+-    unset($_SESSION['_symfony_flashes']);
+-    return $response;
+   }
+ 
+   /**
+@@ -154,9 +164,9 @@ class AjaxCartHelper {
+    */
+   private function getCartBlock($container = NULL) {
+     $blockId = $this->getCartBlockId();
+-    if($blockId != FALSE) {
++    if ($blockId != FALSE) {
+       $block = Block::load($blockId);
+-      $render = $container->get('entity.manager')
++      $render = $container->get('entity_type.manager')
+         ->getViewBuilder('block')
+         ->view($block);
+     }
+@@ -178,11 +188,11 @@ class AjaxCartHelper {
+     //Returns an array of regions each with an array of blocks
+     $regions = $blockRepo->getVisibleBlocksPerRegion();
+     //Iterate all visible blocks and regions
+-    foreach($regions as $region) {
+-      foreach($region as $block) {
++    foreach ($regions as $region) {
++      foreach ($region as $block) {
+         $idPlugin = $block->get('plugin');
+         //check if this is a commerce cart block
+-        if($idPlugin == 'commerce_cart') {
++        if ($idPlugin == 'commerce_cart') {
+           $cartBlockId = $block->get('id');
+           return($cartBlockId);
+         }

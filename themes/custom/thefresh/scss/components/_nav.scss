@@ -1,0 +1,16 @@
+nav {
+  &#navbar-main {
+    background-color: $snow;
+    a {
+      color: $coal;
+    }
+
+    .navigation {
+      margin: 0 auto;
+    }
+
+    .block-commerce-cart {
+      display: none;
+    }
+  }
+}

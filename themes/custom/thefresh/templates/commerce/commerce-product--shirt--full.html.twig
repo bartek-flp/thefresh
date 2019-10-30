@@ -1,0 +1,66 @@
+{#
+/**
+ * @file
+ *
+ * Default product template.
+ *
+ * Available variables:
+ * - attributes: HTML attributes for the wrapper.
+ * - product: The rendered product fields.
+ *   Use 'product' to print them all, or print a subset such as
+ *   'product.title'. Use the following code to exclude the
+ *   printing of a given field:
+ *   @code
+ *   {{ product|without('title') }}
+ *   @endcode
+ * - product_entity: The product entity.
+ * - product_url: The product URL.
+ *
+ * @ingroup themeable
+ */
+#}
+<article{{ attributes }}>
+  <div class="product">
+    <div class="top-data d-flex">
+      <div class="slider-single col-lg-8 col-12">
+        {% for image in slider_main_image %}
+          <div class="image">
+            <a href="{{ image.data.url }}" data-rel="grouped">
+              {{ image.render }}
+            </a>
+          </div>
+        {% endfor %}
+      </div>
+      <div class="slider-nav col-12 d-block d-lg-none mobile">
+        {% for image in slider_nav %}
+          <div class="image">
+            {{ image.render }}
+          </div>
+        {% endfor %}
+      </div>
+      <div class="price-cart col-lg-4 col-12">
+        <div class="product-title">
+          <div class="d-flex flex-column">
+            {{ product.title }}
+            <div class="attributes">
+              - <span class="color-name"></span>
+              <span class="size-name"></span> -
+            </div>
+          </div>
+        </div>
+        {{ product.variation_price }}
+        {{ product.variations }}
+      </div>
+    </div>
+    <div class="slider-nav col-8 d-none d-lg-block">
+      {% for image in slider_nav %}
+        <div class="image">
+          {{ image.render }}
+        </div>
+      {% endfor %}
+    </div>
+    <div class="description col-lg-10 col-12">
+      {{ product.body }}
+    </div>
+  </div>
+</article>

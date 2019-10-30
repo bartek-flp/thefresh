@@ -1,0 +1,4 @@
+tfc_commerce:
+  version: VERSION
+  js:
+    js/tfc_commerce.js: {}

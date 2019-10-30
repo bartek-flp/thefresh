@@ -1,0 +1,231 @@
+.product {
+  .featured {
+    img {
+      width: 100%;
+      height: auto;
+    }
+  }
+
+  .top-data {
+    margin: 25px 0 0 0;
+    justify-content: center;
+    flex-direction: column;
+    @media screen and (min-width: $lg) {
+      flex-direction: row;
+      justify-content: space-between;
+    }
+  }
+
+  .description {
+    padding-top: 40px;
+    border-top: 1px solid $brand-grey;
+  }
+
+  .price-cart {
+    .product-title {
+      font-size: 26px;
+      font-weight: 700;
+      margin: 0 0 20px 0;
+      .attributes {
+        font-size: 20px;
+        font-weight: 400;
+      }
+    }
+    .attribute-widgets {
+      padding: 0;
+      margin: 20px 0;
+      fieldset {
+        padding: 0;
+        legend {
+          font-size: 18px;
+        }
+      }
+      .color_field__swatch {
+        border: 1px solid $coal;
+        &:hover {
+          cursor: pointer;
+        }
+      }
+    }
+    .radio-color {
+      display: flex;
+      input[type=radio]:checked + label {
+        width: 33px;
+        height: 33px;
+        border: 1px solid $brand-green;
+        border-radius: 33px;
+        padding: 3px;
+      }
+      .form-item-purchased-entity-0-attributes-attribute-kolor {
+        width: 25px;
+        height: 25px;
+        padding: 3px;
+        margin: 0 10px 0 0;
+        .field--label-hidden {
+          display: none;
+        }
+      }
+    }
+    .field--widget-commerce-product-variation-attributes {
+      padding: 0;
+      .form-type-select {
+        margin: 20px 0;
+        padding: 0;
+      }
+    }
+    .field--type-commerce-price {
+      .field__item {
+        color: $coal;
+        font-size: 20px;
+      }
+    }
+
+    .commerce-order-item-add-to-cart-form {
+      .attribute-widgets {
+        fieldset {
+          display: flex;
+          select {
+            margin: 0 auto;
+            width: 100%;
+            height: 35px;
+          }
+        }
+      }
+    }
+
+    .radio-tshirt-size {
+      display: flex;
+      padding: 0;
+      .radio {
+        padding: 0;
+        text-align: center;
+        label {
+          width: 40px;
+          font-size: 26px;
+        }
+        input[type=radio] + label {
+          width: 40px;
+          font-size: 26px;
+          cursor: pointer;
+        }
+        input[type=radio]:checked + label {
+          cursor: pointer;
+          font-weight: 700;
+          text-decoration: underline;
+        }
+      }
+    }
+
+    .form-actions {
+      padding: 0;
+    }
+  }
+  .slider-nav {
+    left: -25px;
+    margin: 0 auto 50px auto;
+    &.mobile {
+      left: 0;
+    }
+    @media screen and (min-width: $xl) {
+      margin: 30px 0 50px 0;
+    }
+    .slick-track {
+      display: flex;
+      flex-direction: row;
+      .slick-slide {
+        &:active,
+        &:focus {
+          border: 0;
+          outline: none;
+        }
+        &.is-active {
+          img {
+            border-bottom: 1px solid $brand-blue;
+          }
+        }
+      }
+    }
+    img {
+      margin: 0 auto;
+      &:hover {
+        cursor: pointer;
+      }
+    }
+    .slick-prev,
+    .slick-next {
+      width: 22px;
+      height: 22px;
+      z-index: 999;
+      &:before {
+        font-size: 22px;
+        color: $coal;
+      }
+    }
+    .slick-next {
+      right: 0;
+      @media screen and (min-width: $xl) {
+        right: 10px;
+      }
+      &:before {
+        content: "〉";
+      }
+    }
+    .slick-prev {
+      left: 0;
+      @media screen and (min-width: $xl) {
+        left: 10px;
+      }
+      &:before {
+        content: "〈";
+      }
+    }
+  }
+  .slider-single {
+    right: 0;
+    @media screen and (min-width: $xl) {
+      right: 25px;
+    }
+    .slick-prev,
+    .slick-next {
+      width: 35px;
+      height: 35px;
+      z-index: 999;
+      &:before {
+        font-size: 35px;
+        color: $coal;
+      }
+    }
+    .slick-prev {
+      left: 0;
+      @media screen and (min-width: $md) {
+        left: 70px;
+      }
+      &:before {
+        content: "〈";
+      }
+    }
+    .slick-next {
+      right: 0;
+      @media screen and (min-width: $md) {
+        right: 70px;
+      }
+      &:before {
+        content: "〉";
+      }
+    }
+    img {
+      margin: 0 auto;
+      &:active,
+      &:focus {
+        outline: none;
+      }
+    }
+    .slick-slide {
+      width: 350px;
+    }
+  }
+
+  .ajax-progress-throbber {
+    display: none;
+  }
+}

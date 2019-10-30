@@ -1,0 +1,14 @@
+name: Commerce Tpay
+type: module
+description: 'Provides Commerce integration for Tpay Payments.'
+package: Commerce
+# core: 8.x
+dependencies:
+  - commerce
+  - commerce:commerce_payment
+
+# Information added by Drupal.org packaging script on 2018-08-07
+version: '8.x-1.0-rc3'
+core: '8.x'
+project: 'commerce_tpay'
+datestamp: 1533670383

@@ -1,0 +1,11 @@
+--- ajax_add_to_cart.module
++++ ajax_add_to_cart.module
+@@ -53,7 +53,7 @@ function ajax_add_to_cart_ajax_validate(&$form, $form_state) {
+     // Using getInstanace method to create Object.
+     $object = AjaxCartHelper::getInstance();
+     // If validated successfully submit form.
+-    $object->ajaxAddToCartAjaxResponse($form_id, $response);
++    $object->ajaxAddToCartAjaxResponse($form, $form_id, $response);
+   }
+   return $response;
+ }

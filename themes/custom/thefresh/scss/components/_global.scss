@@ -1,0 +1,28 @@
+body {
+  background: $brand-blue;
+  a {
+    color: $brand-green;
+    &:hover {
+      color: lighten($brand-green, 5%);
+      text-decoration: none;
+    }
+  }
+
+  .theme-dark {
+    div, p, h1, h2, h3, h4, h5, h6, .text-bright {
+      color: $brand-grey;
+    }
+  }
+  .theme-bright {
+    div, p, h1, h2, h3, h4, h5, h6, .text-dark {
+      color: $brand-blue;
+    }
+  }
+  .bottom-line {
+    border-bottom: 2px solid $coal;
+    width: 50px;
+    &.center {
+      margin: 0 auto;
+    }
+  }
+}

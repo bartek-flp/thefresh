@@ -73,6 +73,7 @@ AddEncoding gzip svgz
   # if you enable "www." stripping or enforcement, in order to ensure that
   # you don't bounce between http and https.
   RewriteRule ^ - [E=protossl]
+  RewriteCond %{HTTPS} on
   RewriteRule ^ - [E=protossl:s]
 
   # Make sure Authorization HTTP header is available to PHP
@@ -108,10 +109,10 @@ AddEncoding gzip svgz
   # To redirect all users to access the site WITHOUT the 'www.' prefix,
   # (http://www.example.com/foo will be redirected to http://example.com/foo)
   # uncomment the following:
-   RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
-   RewriteCond "%{HTTP_HOST}" "!^$"
-   RewriteCond %{HTTPS} off
-   RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+  RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
+  RewriteRule ^ https%{ENV:protossl}://%1%{REQUEST_URI} [L,R=301]
+  RewriteCond %{HTTP_HOST} .
+  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI}
 
   # Modify the RewriteBase if you are using Drupal in a subdirectory or in a
   # VirtualDocumentRoot and the rewrite rules are not working properly.
@@ -121,7 +122,7 @@ AddEncoding gzip svgz
   #
   # If your site is running in a VirtualDocumentRoot at http://example.com/,
   # uncomment the following line:
-  RewriteBase /
+  # RewriteBase /
 
   # Redirect common PHP files to their new locations.
   RewriteCond %{REQUEST_URI} ^(.*)?/(install.php) [OR]
